@@ -59,33 +59,44 @@ app.post('/api/login', async (req, res) => {
 
 /**
  * POST /api/bet → 转发投注记录查询请求到真实 API
- * Body: { baseUrl, token, ...queryParams }
- * 带上 Authorization header
+ * 使用 multipart/form-data 格式，token 作为表单字段传递
  */
 app.post('/api/bet', async (req, res) => {
-  const { baseUrl, token, ...queryParams } = req.body;
+  const { baseUrl, token, startTime, endTime, username, vendor, pageCount, pageSize } = req.body;
 
   if (!baseUrl || !token) {
     return res.status(400).json({ error: '缺少必要参数：baseUrl、token' });
   }
 
   try {
-    // 转发到真实 API，携带 token
+    // 构建 multipart/form-data
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('plat_id', '30035');
+    form.append('token', token);
+    form.append('page_count', String(pageCount || 1));
+    form.append('page_size', String(pageSize || 20));
+    form.append('device', 'bd0e7b1c-86b4-422b-beeb-0e3f161e5470');
+    form.append('lang', 'zh_CN');
+    form.append('timezone', '+8');
+    form.append('custom_host', baseUrl + '/');
+    form.append('login_admin_user_id', '1551');
+    if (startTime) form.append('bet_at-{>=}', startTime);
+    if (endTime) form.append('bet_at-{<=}', endTime);
+    if (username) form.append('username', username);
+    if (vendor) form.append('vendor_name', vendor);
+
     const response = await axios.post(
       `${baseUrl}/admin/plat_users_bet/index`,
-      queryParams,
+      form,
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { ...form.getHeaders() },
         timeout: 30000
       }
     );
     res.json(response.data);
   } catch (error) {
     if (error.response) {
-      // 401 表示 token 失效，原样返回给前端处理
       res.status(error.response.status).json(error.response.data);
     } else {
       res.status(500).json({ error: '无法连接到 API 服务器', detail: error.message });

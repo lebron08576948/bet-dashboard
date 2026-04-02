@@ -119,56 +119,18 @@ function showMainPage() {
 // =============================================
 // 登入逻辑
 // =============================================
-loginBtn.addEventListener('click', async () => {
-  const baseUrl  = document.getElementById('api-url').value.trim();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
+loginBtn.addEventListener('click', () => {
+  const baseUrl = document.getElementById('api-url').value.trim();
+  const token   = document.getElementById('login-token').value.trim();
 
   loginError.textContent = '';
 
   if (!baseUrl) { loginError.textContent = '请输入 API Base URL'; return; }
-  if (!username) { loginError.textContent = '请输入账号'; return; }
-  if (!password) { loginError.textContent = '请输入密码'; return; }
+  if (!token)   { loginError.textContent = '请输入 Token'; return; }
 
-  loginBtn.disabled = true;
-  loginBtn.textContent = '登入中...';
-
-  try {
-    // 通过本地代理发送登入请求（避免 CORS）
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ baseUrl, username, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      // API 返回错误
-      loginError.textContent = data?.message || data?.error || `登入失败 (${res.status})`;
-      return;
-    }
-
-    // 取得 token（兼容不同 API 响应格式）
-    const token = data?.token || data?.data?.token || data?.access_token;
-    if (!token) {
-      loginError.textContent = '登入成功但未取得 token，请检查 API 响应格式';
-      return;
-    }
-
-    // 储存到 localStorage
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(API_URL_KEY, baseUrl);
-
-    // 跳转主页
-    showMainPage();
-
-  } catch (err) {
-    loginError.textContent = `请求失败：${err.message}`;
-  } finally {
-    loginBtn.disabled = false;
-    loginBtn.textContent = '登入';
-  }
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(API_URL_KEY, baseUrl);
+  showMainPage();
 });
 
 // 按 Enter 也能登入
