@@ -40,14 +40,14 @@ let activeFilters = new Set(['bet_time']); // 默认勾选投注时间
 // 常量：所有可用栏位定义
 // =============================================
 const ALL_COLUMNS = [
-  { key: 'bet_time',     label: '时间',     group: '📅 时间' },
-  { key: 'user_id',      label: '用户ID',   group: '👤 用户' },
-  { key: 'vendor_name',  label: '游戏厂商', group: '🎮 游戏' },
-  { key: 'game_name',    label: '游戏类型', group: '🎮 游戏' },
-  { key: 'bet_amount',   label: '投注金额', group: '💰 金额' },
-  { key: 'win_amount',   label: '输赢金额', group: '💰 金额' },
-  { key: 'profit',       label: '用户流水', group: '💰 金额' },
-  { key: 'status',       label: '状态',     group: '📌 其他' },
+  { key: 'bet_at',          label: '时间',     group: '📅 时间' },
+  { key: 'user_id',         label: '用户ID',   group: '👤 用户' },
+  { key: 'vendor_type',     label: '游戏厂商', group: '🎮 游戏' },
+  { key: 'game_type',       label: '游戏类型', group: '🎮 游戏' },
+  { key: 'bet_gold',        label: '投注金额', group: '💰 金额' },
+  { key: 'bet_result',      label: '输赢金额', group: '💰 金额' },
+  { key: 'backwater',       label: '用户流水', group: '💰 金额' },
+  { key: 'status',          label: '状态',     group: '📌 其他' },
 ];
 
 // localStorage key 名（与需求一致）
