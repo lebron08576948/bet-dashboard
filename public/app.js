@@ -13,20 +13,14 @@
 // 常量：所有可用栏位定义
 // =============================================
 const ALL_COLUMNS = [
-  { key: 'order_no',     label: '订单号',   },
+  { key: 'bet_time',     label: '时间',     },
   { key: 'user_id',      label: '用户ID',   },
-  { key: 'username',     label: '用户名',   },
-  { key: 'game_name',    label: '游戏名称', },
-  { key: 'vendor_name',  label: '厂商',     },
+  { key: 'vendor_name',  label: '游戏厂商', },
+  { key: 'game_name',    label: '游戏类型', },
   { key: 'bet_amount',   label: '投注金额', },
-  { key: 'win_amount',   label: '赢得金额', },
-  { key: 'profit',       label: '盈亏',     },
-  { key: 'currency',     label: '币种',     },
-  { key: 'bet_time',     label: '投注时间', },
-  { key: 'settle_time',  label: '结算时间', },
+  { key: 'win_amount',   label: '输赢金额', },
+  { key: 'profit',       label: '用户流水', },
   { key: 'status',       label: '状态',     },
-  { key: 'ip',           label: 'IP地址',   },
-  { key: 'platform',     label: '平台',     },
 ];
 
 // localStorage key 名（与需求一致）
