@@ -247,11 +247,27 @@ async function doSearch() {
   searchBtn.disabled = true;
   exportBtn.disabled = true;
 
+  // 构建 multipart/form-data 直接打 API（纯前端，不经代理）
+  const form = new FormData();
+  form.append('plat_id', '30035');
+  form.append('token', token);
+  form.append('page_count', String(params.pageCount || 1));
+  form.append('page_size', String(params.pageSize || 20));
+  form.append('device', 'bd0e7b1c-86b4-422b-beeb-0e3f161e5470');
+  form.append('lang', 'zh_CN');
+  form.append('timezone', '+8');
+  form.append('custom_host', apiUrl + '/');
+  form.append('login_admin_user_id', '1551');
+  // 附加筛选参数
+  const reserved = ['baseUrl','token','pageCount','pageSize'];
+  Object.entries(params).forEach(([k,v]) => {
+    if (!reserved.includes(k) && v !== undefined && v !== '') form.append(k, String(v));
+  });
+
   try {
-    const res = await fetch('/api/bet', {
+    const res = await fetch(`${apiUrl}/admin/plat_users_bet/index`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
+      body: form
     });
 
     if (res.status === 401) {
