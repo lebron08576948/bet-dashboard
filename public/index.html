@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>投注记录查询系统</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
   <!-- SheetJS CDN：用于导出 Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -46,13 +50,10 @@
 
       <!-- 左侧：栏位勾选面板 -->
       <aside class="sidebar">
-        <div class="sidebar-header">
-          <h3>显示栏位</h3>
-          <div class="sidebar-actions">
-            <button class="btn-link" id="check-all-btn">全选</button>
-            <span>|</span>
-            <button class="btn-link" id="uncheck-all-btn">全不选</button>
-          </div>
+        <div class="sidebar-actions" style="display:flex;gap:6px;padding:8px 0 10px 0;border-bottom:1px solid #333;margin-bottom:8px;">
+          <button class="btn-link" id="check-all-btn">全选</button>
+          <span style="color:#555;">|</span>
+          <button class="btn-link" id="uncheck-all-btn">全不选</button>
         </div>
         <div class="column-list" id="column-list">
           <!-- 由 JS 动态生成 -->

@@ -154,11 +154,29 @@ function renderFilterInputs() {
       div.className = 'form-group form-group-wide';
       div.innerHTML = `
         <label>${f.label}</label>
-        <div class="time-range">
-          <input type="datetime-local" id="filter-${f.key}-start" />
-          <span class="time-separator">~</span>
-          <input type="datetime-local" id="filter-${f.key}-end" />
-        </div>`;
+        <input type="text" id="filter-${f.key}-range" placeholder="选择日期区间" readonly style="cursor:pointer;" />
+        <input type="hidden" id="filter-${f.key}-start" />
+        <input type="hidden" id="filter-${f.key}-end" />`;
+
+      // 初始化 flatpickr 区间选择器
+      setTimeout(() => {
+        const rangeEl = document.getElementById(`filter-${f.key}-range`);
+        if (rangeEl && window.flatpickr) {
+          flatpickr(rangeEl, {
+            mode: 'range',
+            enableTime: true,
+            time_24hr: true,
+            dateFormat: 'Y-m-d H:i',
+            locale: 'zh',
+            onChange: (selectedDates) => {
+              const startEl = document.getElementById(`filter-${f.key}-start`);
+              const endEl   = document.getElementById(`filter-${f.key}-end`);
+              if (selectedDates[0]) startEl.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d H:i:S');
+              if (selectedDates[1]) endEl.value   = flatpickr.formatDate(selectedDates[1], 'Y-m-d H:i:S');
+            }
+          });
+        }
+      }, 50);
     } else {
       div.className = 'form-group';
       div.innerHTML = `
