@@ -3,6 +3,27 @@
  * 统一勾选：勾选 = 显示筛选输入框 + 显示结果栏位
  */
 
+// 厂商ID对照表
+const VENDOR_ID_MAP = {
+  155: 'DB Lottery', 158: 'VIVO Gaming', 159: 'Evolution_A', 199: 'FC',
+  208: 'Spribe_A', 210: 'OneTouch', 225: 'Evolution_R', 243: 'JILI-INR',
+  267: 'Funtide', 268: 'Evoplay_A', 283: 'Easybet-96com', 284: 'Turbo Games',
+  287: 'Nolimit City_A', 288: 'Nolimit City_R', 289: 'Top Spin', 294: 'Exchange-96',
+  295: 'BigTimeGaming_A', 296: 'BigTimeGaming_R', 298: 'Netent_A', 299: 'Netent_R',
+  301: 'Red Tiger_A', 302: 'Red Tiger_R', 303: 'Hacksaw', 308: 'SmartSoft Gaming',
+  314: 'SA Gaming', 316: "Play'n Go", 336: 'KY GAMING', 344: 'Bgaming',
+  356: 'Amusnet', 357: '7777 Gaming', 358: 'Winfinity', 359: 'Aviatrix',
+  369: 'DELFINO_PG Soft', 401: '96-Tequity', 403: 'KingMidas', 404: 'Galaxsys',
+  405: 'Shady Lady', 406: 'Playtech', 418: 'BGaming_R', 421: 'DELFINO_PragmaticPlay',
+  423: 'Slotmill', 425: 'DELFINO_FatPanda',
+};
+
+// 游戏类型对照表
+const VENDOR_TYPE_MAP = {
+  2: '棋牌', 4: '彩票', 8: '捕鱼', 16: '电子',
+  32: '真人', 64: '体育电竞', 128: '链游',
+};
+
 // =============================================
 // 统一字段定义（筛选 + 栏位合并）
 // =============================================
@@ -30,63 +51,6 @@ const ALL_ITEMS = [
   { key: 'account_currency', label: '帐户币种',   group: '📌 其他',  colKey: 'coin_name_unique',  filterType: 'text', param: 'coin_name_unique',    defaultOn: false },
   { key: 'vendor_currency',  label: '厂商币种',   group: '📌 其他',  colKey: 'vendor_coin_name_unique', filterType: 'text', param: 'vendor_coin_name_unique', defaultOn: false },
 ];
-
-// 厂商ID对照表
-const VENDOR_ID_MAP = {
-  155: 'DB Lottery',
-  158: 'VIVO Gaming',
-  159: 'Evolution_A',
-  199: 'FC',
-  208: 'Spribe_A',
-  210: 'OneTouch',
-  225: 'Evolution_R',
-  243: 'JILI-INR',
-  267: 'Funtide',
-  268: 'Evoplay_A',
-  283: 'Easybet-96com',
-  284: 'Turbo Games',
-  287: 'Nolimit City_A',
-  288: 'Nolimit City_R',
-  289: 'Top Spin',
-  294: 'Exchange-96',
-  295: 'BigTimeGaming_A',
-  296: 'BigTimeGaming_R',
-  298: 'Netent_A',
-  299: 'Netent_R',
-  301: 'Red Tiger_A',
-  302: 'Red Tiger_R',
-  303: 'Hacksaw',
-  308: 'SmartSoft Gaming',
-  314: 'SA Gaming',
-  316: "Play'n Go",
-  336: 'KY GAMING',
-  344: 'Bgaming',
-  356: 'Amusnet',
-  357: '7777 Gaming',
-  358: 'Winfinity',
-  359: 'Aviatrix',
-  369: 'DELFINO_PG Soft',
-  401: '96-Tequity',
-  403: 'KingMidas',
-  404: 'Galaxsys',
-  405: 'Shady Lady',
-  406: 'Playtech',
-  418: 'BGaming_R',
-  421: 'DELFINO_PragmaticPlay',
-  423: 'Slotmill',
-  425: 'DELFINO_FatPanda',
-};
-
-// 游戏类型对照表
-const VENDOR_TYPE_MAP = {
-  2:   '棋牌',
-  4:   '彩票',
-  8:   '捕鱼',
-  16:  '电子',
-  32:  '真人',
-  64:  '体育电竞',
-  128: '链游',
-};
 
 const TOKEN_KEY   = 'bet_token';
 const API_URL_KEY = 'bet_api_url';
