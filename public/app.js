@@ -1,177 +1,141 @@
 /**
- * app.js - 投注记录查询系统 前端逻辑
- *
- * 主要功能：
- * 1. 登入 / 登出
- * 2. 栏位勾选管理
- * 3. 筛选条件查询
- * 4. 分页
- * 5. 导出 Excel（使用 SheetJS）
+ * app.js - 投注记录查询系统
+ * 统一勾选：勾选 = 显示筛选输入框 + 显示结果栏位
  */
 
 // =============================================
-// 常量：所有可用筛选条件定义
+// 统一字段定义（筛选 + 栏位合并）
 // =============================================
-const ALL_FILTERS = [
+const ALL_ITEMS = [
   // 时间
-  { key: 'bet_time',      label: '投注时间', group: '📅 时间', type: 'timerange', paramStart: 'bet_at-{>=}', paramEnd: 'bet_at-{<=}' },
-  { key: 'settle_time',   label: '结算时间', group: '📅 时间', type: 'timerange', paramStart: 'settlement_at-{>=}', paramEnd: 'settlement_at-{<=}' },
+  { key: 'bet_time',         label: '投注时间',   group: '📅 时间',  colKey: 'bet_at',            filterType: 'timerange', paramStart: 'bet_at-{>=}', paramEnd: 'bet_at-{<=}',    defaultOn: true },
+  { key: 'settle_time',      label: '结算时间',   group: '📅 时间',  colKey: 'settlement_at',     filterType: 'timerange', paramStart: 'settlement_at-{>=}', paramEnd: 'settlement_at-{<=}', defaultOn: false },
   // 用户
-  { key: 'user_id',       label: '用户ID',   group: '👤 用户', type: 'text', param: 'user_id' },
-  { key: 'nickname',      label: '用户昵称', group: '👤 用户', type: 'text', param: 'nick_name' },
+  { key: 'user_id',          label: '用户ID',     group: '👤 用户',  colKey: 'user_id',           filterType: 'text', param: 'user_id',             defaultOn: true },
+  { key: 'nickname',         label: '用户昵称',   group: '👤 用户',  colKey: 'nick_name',         filterType: 'text', param: 'nick_name',           defaultOn: false },
   // 游戏
-  { key: 'vendor_id',     label: '游戏厂商ID', group: '🎮 游戏', type: 'text', param: 'vendor_id' },
-  { key: 'vendor_type',   label: '游戏类型', group: '🎮 游戏', type: 'text', param: 'vendor_type' },
-  { key: 'game_name',     label: '游戏名称', group: '🎮 游戏', type: 'text', param: 'vendor_product_name' },
+  { key: 'vendor_id',        label: '游戏厂商',   group: '🎮 游戏',  colKey: 'vendor_id',         filterType: 'text', param: 'vendor_id',           defaultOn: true },
+  { key: 'vendor_type',      label: '游戏类型',   group: '🎮 游戏',  colKey: 'vendor_type',       filterType: 'text', param: 'vendor_type',         defaultOn: true },
+  { key: 'game_name',        label: '游戏名称',   group: '🎮 游戏',  colKey: 'vendor_product_name', filterType: 'text', param: 'vendor_product_name', defaultOn: false },
   // 订单
-  { key: 'order_no',      label: '下注订单号', group: '📋 订单', type: 'text', param: 'order_no' },
-  { key: 'vendor_order',  label: '厂商订单号', group: '📋 订单', type: 'text', param: 'vendor_order_no' },
+  { key: 'order_no',         label: '下注订单号', group: '📋 订单',  colKey: 'order_no',          filterType: 'text', param: 'order_no',            defaultOn: false },
+  { key: 'vendor_order',     label: '厂商订单号', group: '📋 订单',  colKey: 'vendor_order_no',   filterType: 'text', param: 'vendor_order_no',     defaultOn: false },
+  // 金额
+  { key: 'bet_gold',         label: '投注金额',   group: '💰 金额',  colKey: 'bet_gold',          filterType: null,                                  defaultOn: true },
+  { key: 'win_gold',         label: '输赢金额',   group: '💰 金额',  colKey: 'win_gold',          filterType: null,                                  defaultOn: true },
+  { key: 'water',            label: '用户流水',   group: '💰 金额',  colKey: 'water',             filterType: null,                                  defaultOn: true },
   // 其他
-  { key: 'status',           label: '投注状态', group: '📌 其他', type: 'text', param: 'settlement_status' },
-  { key: 'resettle',         label: '重结状态', group: '📌 其他', type: 'text', param: 'resettlement_status' },
-  { key: 'account_currency', label: '帐户币种', group: '📌 其他', type: 'text', param: 'coin_name_unique' },
-  { key: 'vendor_currency',  label: '厂商币种', group: '📌 其他', type: 'text', param: 'vendor_coin_name_unique' },
+  { key: 'status',           label: '投注状态',   group: '📌 其他',  colKey: 'settlement_status', filterType: 'text', param: 'settlement_status',   defaultOn: true },
+  { key: 'resettle',         label: '重结状态',   group: '📌 其他',  colKey: 'resettlement_status', filterType: 'text', param: 'resettlement_status', defaultOn: false },
+  { key: 'account_currency', label: '帐户币种',   group: '📌 其他',  colKey: 'coin_name_unique',  filterType: 'text', param: 'coin_name_unique',    defaultOn: false },
+  { key: 'vendor_currency',  label: '厂商币种',   group: '📌 其他',  colKey: 'vendor_coin_name_unique', filterType: 'text', param: 'vendor_coin_name_unique', defaultOn: false },
 ];
 
-let activeFilters = new Set(['bet_time']); // 默认勾选投注时间
-
-// =============================================
-// 常量：所有可用栏位定义
-// =============================================
-const ALL_COLUMNS = [
-  { key: 'bet_at',            label: '时间',     group: '📅 时间' },
-  { key: 'user_id',           label: '用户ID',   group: '👤 用户' },
-  { key: 'vendor_id',         label: '游戏厂商', group: '🎮 游戏' },
-  { key: 'vendor_type',       label: '游戏类型', group: '🎮 游戏' },
-  { key: 'bet_gold',          label: '投注金额', group: '💰 金额' },
-  { key: 'win_gold',          label: '输赢金额', group: '💰 金额' },
-  { key: 'water',             label: '用户流水', group: '💰 金额' },
-  { key: 'settlement_status', label: '状态',     group: '📌 其他' },
-];
-
-// localStorage key 名（与需求一致）
-const TOKEN_KEY = 'bet_token';
+const TOKEN_KEY   = 'bet_token';
 const API_URL_KEY = 'bet_api_url';
 
-// =============================================
-// 状态变量
-// =============================================
-let currentPage = 1;          // 当前页码
-let totalPages = 1;           // 总页数
-let totalCount = 0;           // 总记录数
-let currentData = [];         // 当前查询结果（用于导出 Excel）
-let checkedColumns = new Set(ALL_COLUMNS.map(c => c.key)); // 默认全部勾选
+let currentPage = 1;
+let totalPages  = 1;
+let totalCount  = 0;
+let currentData = [];
+let checkedItems = new Set(ALL_ITEMS.filter(i => i.defaultOn).map(i => i.key));
 
 // =============================================
-// DOM 元素引用
+// DOM
 // =============================================
-const loginPage    = document.getElementById('login-page');
-const mainPage     = document.getElementById('main-page');
-const loginBtn     = document.getElementById('login-btn');
-const logoutBtn    = document.getElementById('logout-btn');
-const loginError   = document.getElementById('login-error');
-const navApiUrl    = document.getElementById('nav-api-url');
-
-const columnList   = document.getElementById('column-list');
-const checkAllBtn  = document.getElementById('check-all-btn');
+const loginPage     = document.getElementById('login-page');
+const mainPage      = document.getElementById('main-page');
+const loginBtn      = document.getElementById('login-btn');
+const logoutBtn     = document.getElementById('logout-btn');
+const loginError    = document.getElementById('login-error');
+const navApiUrl     = document.getElementById('nav-api-url');
+const columnList    = document.getElementById('column-list');
+const checkAllBtn   = document.getElementById('check-all-btn');
 const uncheckAllBtn = document.getElementById('uncheck-all-btn');
-
-const filterStartTime = document.getElementById('filter-start-time');
-const filterEndTime   = document.getElementById('filter-end-time');
-const filterUsername  = document.getElementById('filter-username');
-const filterVendor    = document.getElementById('filter-vendor');
-const filterPageSize  = document.getElementById('filter-page-size');
-const searchBtn    = document.getElementById('search-btn');
-const exportBtn    = document.getElementById('export-btn');
-
-const statusBar    = document.getElementById('status-bar');
-const tableInfo    = document.getElementById('table-info');
-const emptyState   = document.getElementById('empty-state');
-const dataTable    = document.getElementById('data-table');
-const tableHead    = document.getElementById('table-head');
-const tableBody    = document.getElementById('table-body');
-const pagination   = document.getElementById('pagination');
-const prevBtn      = document.getElementById('prev-btn');
-const nextBtn      = document.getElementById('next-btn');
-const pageInfo     = document.getElementById('page-info');
-const totalCountEl = document.getElementById('total-count');
+const filterInputs  = document.getElementById('filter-inputs');
+const searchBtn     = document.getElementById('search-btn');
+const exportBtn     = document.getElementById('export-btn');
+const statusBar     = document.getElementById('status-bar');
+const tableInfo     = document.getElementById('table-info');
+const emptyState    = document.getElementById('empty-state');
+const dataTable     = document.getElementById('data-table');
+const tableHead     = document.getElementById('table-head');
+const tableBody     = document.getElementById('table-body');
+const pagination    = document.getElementById('pagination');
+const prevBtn       = document.getElementById('prev-btn');
+const nextBtn       = document.getElementById('next-btn');
+const pageInfo      = document.getElementById('page-info');
+const totalCountEl  = document.getElementById('total-count');
 const currentPageEl = document.getElementById('current-page');
-const totalPagesEl = document.getElementById('total-pages');
-const filterToggleGrid = document.getElementById('filter-toggle-grid');
-const filterInputs     = document.getElementById('filter-inputs');
-const filterCheckAll   = document.getElementById('filter-check-all');
-const filterUncheckAll = document.getElementById('filter-uncheck-all');
+const totalPagesEl  = document.getElementById('total-pages');
 
 // =============================================
-// 筛选条件勾选渲染
+// 渲染左侧统一勾选列表
 // =============================================
-function renderFilterToggles() {
-  filterToggleGrid.innerHTML = '';
+function renderItemList() {
+  columnList.innerHTML = '';
   const groups = {};
-  ALL_FILTERS.forEach(f => {
-    if (!groups[f.group]) groups[f.group] = [];
-    groups[f.group].push(f);
+  ALL_ITEMS.forEach(item => {
+    if (!groups[item.group]) groups[item.group] = [];
+    groups[item.group].push(item);
   });
 
-  Object.entries(groups).forEach(([groupName, filters]) => {
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'filter-group';
-
+  Object.entries(groups).forEach(([groupName, items]) => {
     const header = document.createElement('div');
-    header.className = 'filter-group-header';
+    header.className = 'col-group-header';
     header.textContent = groupName;
-    groupDiv.appendChild(header);
+    columnList.appendChild(header);
 
-    filters.forEach(f => {
+    items.forEach(item => {
       const label = document.createElement('label');
-      label.className = 'filter-toggle-item';
+      label.className = 'col-item';
 
       const cb = document.createElement('input');
       cb.type = 'checkbox';
-      cb.value = f.key;
-      cb.checked = activeFilters.has(f.key);
+      cb.value = item.key;
+      cb.checked = checkedItems.has(item.key);
       cb.addEventListener('change', () => {
-        if (cb.checked) activeFilters.add(f.key);
-        else activeFilters.delete(f.key);
+        if (cb.checked) checkedItems.add(item.key);
+        else checkedItems.delete(item.key);
         renderFilterInputs();
+        if (currentData.length > 0) renderTable(currentData);
       });
 
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(' ' + f.label));
-      groupDiv.appendChild(label);
-    });
+      const span = document.createElement('span');
+      span.textContent = item.label;
 
-    filterToggleGrid.appendChild(groupDiv);
+      label.appendChild(cb);
+      label.appendChild(span);
+      columnList.appendChild(label);
+    });
   });
 }
 
+// =============================================
+// 渲染筛选输入区（只渲染有 filterType 且已勾选的）
+// =============================================
 function renderFilterInputs() {
   filterInputs.innerHTML = '';
-  ALL_FILTERS.filter(f => activeFilters.has(f.key)).forEach(f => {
+  ALL_ITEMS.filter(i => checkedItems.has(i.key) && i.filterType).forEach(item => {
     const div = document.createElement('div');
-    if (f.type === 'timerange') {
+    if (item.filterType === 'timerange') {
       div.className = 'form-group form-group-wide';
       div.innerHTML = `
-        <label>${f.label}</label>
-        <input type="text" id="filter-${f.key}-range" placeholder="选择日期区间" readonly style="cursor:pointer;" />
-        <input type="hidden" id="filter-${f.key}-start" />
-        <input type="hidden" id="filter-${f.key}-end" />`;
-
-      // 初始化 flatpickr 区间选择器
+        <label>${item.label}</label>
+        <input type="text" id="filter-${item.key}-range" placeholder="选择日期区间" readonly style="cursor:pointer;" />
+        <input type="hidden" id="filter-${item.key}-start" />
+        <input type="hidden" id="filter-${item.key}-end" />`;
       setTimeout(() => {
-        const rangeEl = document.getElementById(`filter-${f.key}-range`);
-        if (rangeEl && window.flatpickr) {
-          flatpickr(rangeEl, {
-            mode: 'range',
-            enableTime: true,
-            time_24hr: true,
-            dateFormat: 'Y-m-d H:i',
-            locale: 'zh',
-            onChange: (selectedDates) => {
-              const startEl = document.getElementById(`filter-${f.key}-start`);
-              const endEl   = document.getElementById(`filter-${f.key}-end`);
-              if (selectedDates[0]) startEl.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d H:i:S');
-              if (selectedDates[1]) endEl.value   = flatpickr.formatDate(selectedDates[1], 'Y-m-d H:i:S');
+        const el = document.getElementById(`filter-${item.key}-range`);
+        if (el && window.flatpickr) {
+          flatpickr(el, {
+            mode: 'range', enableTime: true, time_24hr: true,
+            dateFormat: 'Y-m-d H:i', locale: 'zh',
+            onChange: (dates) => {
+              const s = document.getElementById(`filter-${item.key}-start`);
+              const e = document.getElementById(`filter-${item.key}-end`);
+              if (dates[0]) s.value = flatpickr.formatDate(dates[0], 'Y-m-d H:i:S');
+              if (dates[1]) e.value = flatpickr.formatDate(dates[1], 'Y-m-d H:i:S');
             }
           });
         }
@@ -179,90 +143,71 @@ function renderFilterInputs() {
     } else {
       div.className = 'form-group';
       div.innerHTML = `
-        <label>${f.label}</label>
-        <input type="text" id="filter-${f.key}" placeholder="可空" />`;
+        <label>${item.label}</label>
+        <input type="text" id="filter-${item.key}" placeholder="可空" />`;
     }
     filterInputs.appendChild(div);
   });
 }
 
-filterCheckAll?.addEventListener('click', () => {
-  activeFilters = new Set(ALL_FILTERS.map(f => f.key));
-  renderFilterToggles();
+// 全选 / 全不选
+checkAllBtn.addEventListener('click', () => {
+  checkedItems = new Set(ALL_ITEMS.map(i => i.key));
+  renderItemList();
   renderFilterInputs();
+  if (currentData.length > 0) renderTable(currentData);
 });
 
-filterUncheckAll?.addEventListener('click', () => {
-  activeFilters.clear();
-  renderFilterToggles();
+uncheckAllBtn.addEventListener('click', () => {
+  checkedItems.clear();
+  renderItemList();
   renderFilterInputs();
+  if (currentData.length > 0) renderTable(currentData);
 });
 
 // =============================================
-// 初始化：判断是否已登入
+// 初始化
 // =============================================
 function init() {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token  = localStorage.getItem(TOKEN_KEY);
   const apiUrl = localStorage.getItem(API_URL_KEY);
-
-  if (token && apiUrl) {
-    // 已登入，显示主页
-    showMainPage();
-  } else {
-    // 未登入，显示登入页
-    showLoginPage();
-  }
+  if (token && apiUrl) showMainPage();
+  else showLoginPage();
 }
 
-// =============================================
-// 页面切换
-// =============================================
 function showLoginPage() {
   loginPage.classList.remove('hidden');
   mainPage.classList.add('hidden');
-  // 如果已储存的 API URL，预填到输入框
   const savedUrl = localStorage.getItem(API_URL_KEY);
-  if (savedUrl) {
-    document.getElementById('api-url').value = savedUrl;
-  }
+  if (savedUrl) document.getElementById('api-url').value = savedUrl;
 }
 
 function showMainPage() {
   loginPage.classList.add('hidden');
   mainPage.classList.remove('hidden');
   navApiUrl.textContent = localStorage.getItem(API_URL_KEY) || '';
-  renderColumnList();
-  renderFilterToggles();
+  renderItemList();
   renderFilterInputs();
 }
 
 // =============================================
-// 登入逻辑
+// 登入 / 登出
 // =============================================
 loginBtn.addEventListener('click', () => {
   const baseUrl = document.getElementById('api-url').value.trim();
   const token   = document.getElementById('login-token').value.trim();
-
   loginError.textContent = '';
-
   if (!baseUrl) { loginError.textContent = '请输入 API Base URL'; return; }
   if (!token)   { loginError.textContent = '请输入 Token'; return; }
-
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(API_URL_KEY, baseUrl);
   showMainPage();
 });
 
-// 按 Enter 也能登入
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !loginPage.classList.contains('hidden')) {
-    loginBtn.click();
-  }
+  if (e.key === 'Enter' && !loginPage.classList.contains('hidden')) loginBtn.click();
 });
 
-// =============================================
-// 登出逻辑
-// =============================================
 logoutBtn.addEventListener('click', () => {
   if (!confirm('确认要登出吗？')) return;
   localStorage.removeItem(TOKEN_KEY);
@@ -271,103 +216,33 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // =============================================
-// 渲染栏位勾选列表
+// 查询
 // =============================================
-function renderColumnList() {
-  columnList.innerHTML = '';
-
-  // 按 group 分组
-  const groups = {};
-  ALL_COLUMNS.forEach(col => {
-    if (!groups[col.group]) groups[col.group] = [];
-    groups[col.group].push(col);
-  });
-
-  Object.entries(groups).forEach(([groupName, cols]) => {
-    // 分组标题
-    const groupHeader = document.createElement('div');
-    groupHeader.className = 'col-group-header';
-    groupHeader.textContent = groupName;
-    columnList.appendChild(groupHeader);
-
-    cols.forEach(col => {
-      const item = document.createElement('label');
-      item.className = 'col-item';
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.value = col.key;
-      cb.checked = checkedColumns.has(col.key);
-      cb.addEventListener('change', () => {
-        if (cb.checked) {
-          checkedColumns.add(col.key);
-        } else {
-          checkedColumns.delete(col.key);
-        }
-        if (currentData.length > 0) renderTable(currentData);
-      });
-
-      const labelSpan = document.createElement('span');
-      labelSpan.textContent = col.label;
-
-      item.appendChild(cb);
-      item.appendChild(labelSpan);
-      columnList.appendChild(item);
-    });
-  });
-}
-
-// 全选 / 全不选
-checkAllBtn.addEventListener('click', () => {
-  checkedColumns = new Set(ALL_COLUMNS.map(c => c.key));
-  renderColumnList();
-  if (currentData.length > 0) renderTable(currentData);
-});
-
-uncheckAllBtn.addEventListener('click', () => {
-  checkedColumns.clear();
-  renderColumnList();
-  if (currentData.length > 0) renderTable(currentData);
-});
-
-// =============================================
-// 查询逻辑
-// =============================================
-searchBtn.addEventListener('click', () => {
-  currentPage = 1; // 点击查询时重置到第一页
-  doSearch();
-});
+searchBtn.addEventListener('click', () => { currentPage = 1; doSearch(); });
 
 async function doSearch() {
   const token  = localStorage.getItem(TOKEN_KEY);
   const apiUrl = localStorage.getItem(API_URL_KEY);
+  if (!token || !apiUrl) { showLoginPage(); return; }
 
-  if (!token || !apiUrl) {
-    showLoginPage();
-    return;
-  }
-
-  // 构建查询参数（从动态筛选条件读取）
   const params = {
-    baseUrl: apiUrl,
-    token: token,
+    baseUrl: apiUrl, token,
     pageCount: currentPage,
     pageSize: parseInt(document.getElementById('filter-page-size').value, 10),
   };
 
-  ALL_FILTERS.filter(f => activeFilters.has(f.key)).forEach(f => {
-    if (f.type === 'timerange') {
-      const startEl = document.getElementById(`filter-${f.key}-start`);
-      const endEl   = document.getElementById(`filter-${f.key}-end`);
-      if (startEl?.value) params[f.paramStart] = startEl.value.replace('T', ' ');
-      if (endEl?.value)   params[f.paramEnd]   = endEl.value.replace('T', ' ');
+  ALL_ITEMS.filter(i => checkedItems.has(i.key) && i.filterType).forEach(item => {
+    if (item.filterType === 'timerange') {
+      const s = document.getElementById(`filter-${item.key}-start`);
+      const e = document.getElementById(`filter-${item.key}-end`);
+      if (s?.value) params[item.paramStart] = s.value;
+      if (e?.value) params[item.paramEnd]   = e.value;
     } else {
-      const el = document.getElementById(`filter-${f.key}`);
-      if (el?.value.trim()) params[f.param] = el.value.trim();
+      const el = document.getElementById(`filter-${item.key}`);
+      if (el?.value.trim()) params[item.param] = el.value.trim();
     }
   });
 
-  // UI 状态：查询中
   setStatus('loading', '<span class="spinner"></span> 查询中...');
   searchBtn.disabled = true;
   exportBtn.disabled = true;
@@ -379,7 +254,6 @@ async function doSearch() {
       body: JSON.stringify(params)
     });
 
-    // token 失效，跳回登入页
     if (res.status === 401) {
       localStorage.removeItem(TOKEN_KEY);
       alert('登入已过期，请重新登入');
@@ -388,36 +262,29 @@ async function doSearch() {
     }
 
     const data = await res.json();
-
     if (!res.ok) {
-      setStatus('error', `查询失败：${data?.message || data?.error || res.status}`);
+      setStatus('error', `查询失败：${data?.msg || data?.message || data?.error || res.status}`);
       return;
     }
 
-    // 兼容不同 API 响应结构
-    // 常见格式：{ data: { list: [...], total: N, page: N, total_pages: N } }
-    //           { data: [...], total: N }
-    //           { list: [...], total: N }
-    const rows = data?.data?.list || data?.data?.data || data?.data || data?.list || [];
-    totalCount = data?.data?.total || data?.total || rows.length;
-    totalPages = data?.data?.total_pages
-               || data?.total_pages
-               || Math.ceil(totalCount / parseInt(filterPageSize.value, 10))
-               || 1;
-    currentPage = data?.data?.page || data?.page || currentPage;
+    // 处理 API 错误码
+    if (data?.status && data.status !== 0) {
+      setStatus('error', `查询失败：[${data.status}] ${data?.msg || '未知错误'}`);
+      return;
+    }
+
+    const rows      = data?.data?.list || data?.data?.data || data?.data || data?.list || [];
+    const pageInfo_ = data?.data?.pageInfo || {};
+    totalCount  = pageInfo_.pageTotal  || data?.data?.total || data?.total || rows.length;
+    totalPages  = pageInfo_.pageCount  || data?.data?.total_pages || Math.ceil(totalCount / params.pageSize) || 1;
+    currentPage = pageInfo_.pageCurrent || data?.data?.page || currentPage;
 
     currentData = rows;
-
-    // 渲染表格
     renderTable(rows);
     updatePagination();
 
-    if (rows.length === 0) {
-      setStatus('', '查询完成，没有符合条件的记录');
-    } else {
-      setStatus('success', `查询成功，共 ${totalCount} 笔记录`);
-      exportBtn.disabled = false;
-    }
+    if (rows.length === 0) setStatus('', '查询完成，没有符合条件的记录');
+    else { setStatus('success', `查询成功，共 ${totalCount} 笔记录`); exportBtn.disabled = false; }
 
   } catch (err) {
     setStatus('error', `请求失败：${err.message}`);
@@ -430,8 +297,7 @@ async function doSearch() {
 // 渲染表格
 // =============================================
 function renderTable(rows) {
-  // 取得当前勾选的栏位（保持原定义顺序）
-  const visibleCols = ALL_COLUMNS.filter(c => checkedColumns.has(c.key));
+  const visibleCols = ALL_ITEMS.filter(i => checkedItems.has(i.key));
 
   if (visibleCols.length === 0) {
     emptyState.textContent = '请至少勾选一个栏位';
@@ -441,18 +307,15 @@ function renderTable(rows) {
     return;
   }
 
-  // 渲染表头
   tableHead.innerHTML = '';
   const headerRow = document.createElement('tr');
   visibleCols.forEach(col => {
     const th = document.createElement('th');
     th.textContent = col.label;
-    th.title = col.key;
     headerRow.appendChild(th);
   });
   tableHead.appendChild(headerRow);
 
-  // 渲染表体
   tableBody.innerHTML = '';
   if (rows.length === 0) {
     emptyState.innerHTML = '<p>没有符合条件的记录</p>';
@@ -467,10 +330,9 @@ function renderTable(rows) {
     const tr = document.createElement('tr');
     visibleCols.forEach(col => {
       const td = document.createElement('td');
-      const val = row[col.key];
-      // 空值显示为 -
+      const val = row[col.colKey];
       td.textContent = (val === null || val === undefined || val === '') ? '-' : val;
-      td.title = td.textContent; // 鼠标悬停显示完整内容
+      td.title = td.textContent;
       tr.appendChild(td);
     });
     tableBody.appendChild(tr);
@@ -478,93 +340,54 @@ function renderTable(rows) {
 
   emptyState.classList.add('hidden');
   dataTable.classList.remove('hidden');
-
-  // 更新统计信息
   tableInfo.classList.remove('hidden');
-  totalCountEl.textContent = totalCount;
+  totalCountEl.textContent  = totalCount;
   currentPageEl.textContent = currentPage;
-  totalPagesEl.textContent = totalPages;
+  totalPagesEl.textContent  = totalPages;
 }
 
 // =============================================
 // 分页
 // =============================================
 function updatePagination() {
-  if (totalPages <= 1 && currentData.length === 0) {
-    pagination.classList.add('hidden');
-    return;
-  }
+  if (totalPages <= 1 && currentData.length === 0) { pagination.classList.add('hidden'); return; }
   pagination.classList.remove('hidden');
   pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页`;
   prevBtn.disabled = currentPage <= 1;
   nextBtn.disabled = currentPage >= totalPages;
 }
 
-prevBtn.addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
-    doSearch();
-  }
-});
-
-nextBtn.addEventListener('click', () => {
-  if (currentPage < totalPages) {
-    currentPage++;
-    doSearch();
-  }
-});
+prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; doSearch(); } });
+nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; doSearch(); } });
 
 // =============================================
-// 导出 Excel（SheetJS）
+// 导出 Excel
 // =============================================
 exportBtn.addEventListener('click', () => {
-  if (currentData.length === 0) {
-    alert('没有可导出的数据');
-    return;
-  }
+  if (currentData.length === 0) { alert('没有可导出的数据'); return; }
+  const visibleCols = ALL_ITEMS.filter(i => checkedItems.has(i.key));
+  if (visibleCols.length === 0) { alert('请至少勾选一个栏位'); return; }
 
-  // 只导出勾选的栏位
-  const visibleCols = ALL_COLUMNS.filter(c => checkedColumns.has(c.key));
-
-  if (visibleCols.length === 0) {
-    alert('请至少勾选一个栏位');
-    return;
-  }
-
-  // 转换为二维数组（第一行为标题）
   const headers = visibleCols.map(c => c.label);
   const rows = currentData.map(row =>
     visibleCols.map(col => {
-      const val = row[col.key];
+      const val = row[col.colKey];
       return (val === null || val === undefined) ? '' : val;
     })
   );
 
-  const sheetData = [headers, ...rows];
-
-  // 使用 SheetJS 创建工作簿
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
-  // 自动调整栏宽（简单估算）
-  ws['!cols'] = headers.map((h, i) => {
-    const maxLen = Math.max(
-      h.length,
-      ...rows.map(r => String(r[i] || '').length)
-    );
-    return { wch: Math.min(maxLen + 2, 30) };
-  });
-
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = headers.map((h, i) => ({
+    wch: Math.min(Math.max(h.length, ...rows.map(r => String(r[i] || '').length)) + 2, 30)
+  }));
   XLSX.utils.book_append_sheet(wb, ws, '投注记录');
-
-  // 下载文件
-  const now = new Date();
-  const dateStr = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   XLSX.writeFile(wb, `投注记录_${dateStr}.xlsx`);
 });
 
 // =============================================
-// 工具函数：显示状态栏
+// 工具
 // =============================================
 function setStatus(type, html) {
   statusBar.innerHTML = html;
@@ -573,7 +396,4 @@ function setStatus(type, html) {
   statusBar.classList.remove('hidden');
 }
 
-// =============================================
-// 启动
-// =============================================
 init();
