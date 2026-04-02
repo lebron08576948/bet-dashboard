@@ -501,3 +501,15 @@ html, body {
 .time-range { display: flex; align-items: center; gap: 8px; }
 .time-range input { flex: 1; }
 .time-separator { color: #aaa; font-size: 14px; white-space: nowrap; }
+
+/* 栏位分组标题 */
+.col-group-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 0 4px 0;
+  border-bottom: 1px solid #333;
+  margin-bottom: 4px;
+}

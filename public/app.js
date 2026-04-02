@@ -13,14 +13,14 @@
 // 常量：所有可用栏位定义
 // =============================================
 const ALL_COLUMNS = [
-  { key: 'bet_time',     label: '时间',     },
-  { key: 'user_id',      label: '用户ID',   },
-  { key: 'vendor_name',  label: '游戏厂商', },
-  { key: 'game_name',    label: '游戏类型', },
-  { key: 'bet_amount',   label: '投注金额', },
-  { key: 'win_amount',   label: '输赢金额', },
-  { key: 'profit',       label: '用户流水', },
-  { key: 'status',       label: '状态',     },
+  { key: 'bet_time',     label: '时间',     group: '📅 时间' },
+  { key: 'user_id',      label: '用户ID',   group: '👤 用户' },
+  { key: 'vendor_name',  label: '游戏厂商', group: '🎮 游戏' },
+  { key: 'game_name',    label: '游戏类型', group: '🎮 游戏' },
+  { key: 'bet_amount',   label: '投注金额', group: '💰 金额' },
+  { key: 'win_amount',   label: '输赢金额', group: '💰 金额' },
+  { key: 'profit',       label: '用户流水', group: '💰 金额' },
+  { key: 'status',       label: '状态',     group: '📌 其他' },
 ];
 
 // localStorage key 名（与需求一致）
@@ -149,38 +149,45 @@ logoutBtn.addEventListener('click', () => {
 // =============================================
 function renderColumnList() {
   columnList.innerHTML = '';
+
+  // 按 group 分组
+  const groups = {};
   ALL_COLUMNS.forEach(col => {
-    const item = document.createElement('label');
-    item.className = 'col-item';
+    if (!groups[col.group]) groups[col.group] = [];
+    groups[col.group].push(col);
+  });
 
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = col.key;
-    cb.checked = checkedColumns.has(col.key);
-    cb.addEventListener('change', () => {
-      if (cb.checked) {
-        checkedColumns.add(col.key);
-      } else {
-        checkedColumns.delete(col.key);
-      }
-      // 如果已有查询结果，重新渲染表格（只改变显示栏位）
-      if (currentData.length > 0) {
-        renderTable(currentData);
-      }
+  Object.entries(groups).forEach(([groupName, cols]) => {
+    // 分组标题
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'col-group-header';
+    groupHeader.textContent = groupName;
+    columnList.appendChild(groupHeader);
+
+    cols.forEach(col => {
+      const item = document.createElement('label');
+      item.className = 'col-item';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = col.key;
+      cb.checked = checkedColumns.has(col.key);
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          checkedColumns.add(col.key);
+        } else {
+          checkedColumns.delete(col.key);
+        }
+        if (currentData.length > 0) renderTable(currentData);
+      });
+
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = col.label;
+
+      item.appendChild(cb);
+      item.appendChild(labelSpan);
+      columnList.appendChild(item);
     });
-
-    const labelDiv = document.createElement('span');
-    labelDiv.className = 'col-label';
-    labelDiv.textContent = col.label;
-
-    const keySpan = document.createElement('span');
-    keySpan.className = 'col-key';
-    keySpan.textContent = col.key;
-    labelDiv.appendChild(keySpan);
-
-    item.appendChild(cb);
-    item.appendChild(labelDiv);
-    columnList.appendChild(item);
   });
 }
 
