@@ -225,15 +225,59 @@ function showMainPage() {
 // =============================================
 // 登入 / 登出
 // =============================================
-loginBtn.addEventListener('click', () => {
-  const baseUrl = document.getElementById('api-url').value.trim();
-  const token   = document.getElementById('login-token').value.trim();
+const TOTP_SECRET = 'S7KWDITDN2NIGIA4';
+const DEVICE_ID   = 'bd0e7b1c-86b4-422b-beeb-0e3f161e5470';
+
+loginBtn.addEventListener('click', async () => {
+  const baseUrl  = document.getElementById('api-url').value.trim();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
   loginError.textContent = '';
-  if (!baseUrl) { loginError.textContent = '请输入 API Base URL'; return; }
-  if (!token)   { loginError.textContent = '请输入 Token'; return; }
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(API_URL_KEY, baseUrl);
-  showMainPage();
+  if (!baseUrl)   { loginError.textContent = '请输入 API Base URL'; return; }
+  if (!username)  { loginError.textContent = '请输入账号'; return; }
+  if (!password)  { loginError.textContent = '请输入密码'; return; }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = '登入中...';
+
+  try {
+    // 生成 TOTP 验证码
+    const totp = new OTPAuth.TOTP({ secret: TOTP_SECRET, digits: 6, period: 30 });
+    const googleCode = totp.generate();
+
+    // MD5 加密密码
+    const passwordMd5 = md5(password);
+
+    const form = new FormData();
+    form.append('username', username);
+    form.append('password', passwordMd5);
+    form.append('google_code', googleCode);
+    form.append('device', DEVICE_ID);
+    form.append('lang', 'zh_CN');
+    form.append('timezone', '+8');
+    form.append('custom_host', baseUrl + '/');
+
+    const res = await fetch(`${baseUrl}/admin/login`, { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (data?.status !== 0) {
+      loginError.textContent = `登入失败：[${data?.status}] ${data?.msg || '未知错误'}`;
+      return;
+    }
+
+    const token = data?.data?.token || data?.data?.info?.token;
+    if (!token) { loginError.textContent = '登入成功但未取得 token'; return; }
+
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(API_URL_KEY, baseUrl);
+    showMainPage();
+
+  } catch (err) {
+    loginError.textContent = `请求失败：${err.message}`;
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = '登入';
+  }
 });
 
 document.addEventListener('keydown', (e) => {

@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+  <!-- MD5 -->
+  <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
+  <!-- OTPAuth (TOTP) -->
+  <script src="https://cdn.jsdelivr.net/npm/otpauth@9.3.6/dist/otpauth.umd.min.js"></script>
   <!-- SheetJS CDN：用于导出 Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -25,11 +29,15 @@
         <input type="text" id="api-url" placeholder="https://test-admin.96cftrial.com" />
       </div>
       <div class="form-group">
-        <label for="login-token">Token</label>
-        <textarea id="login-token" rows="4" placeholder="请贴上 token" style="width:100%;font-size:12px;padding:8px;border-radius:6px;border:1px solid #444;background:#2a2a2a;color:#eee;resize:vertical;"></textarea>
+        <label for="login-username">账号</label>
+        <input type="text" id="login-username" placeholder="请输入账号" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">密码</label>
+        <input type="password" id="login-password" placeholder="请输入密码" />
       </div>
 
-      <button class="btn btn-primary btn-block" id="login-btn">进入系统</button>
+      <button class="btn btn-primary btn-block" id="login-btn">登入</button>
       <div id="login-error" class="error-msg"></div>
     </div>
   </div>
