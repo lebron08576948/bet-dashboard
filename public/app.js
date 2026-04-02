@@ -225,43 +225,28 @@ function showMainPage() {
 // =============================================
 // 登入 / 登出
 // =============================================
-const TOTP_SECRET = 'S7KWDITDN2NIGIA4';
-const DEVICE_ID   = 'bd0e7b1c-86b4-422b-beeb-0e3f161e5470';
-
 loginBtn.addEventListener('click', async () => {
   const baseUrl  = document.getElementById('api-url').value.trim();
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
   loginError.textContent = '';
-  if (!baseUrl)   { loginError.textContent = '请输入 API Base URL'; return; }
-  if (!username)  { loginError.textContent = '请输入账号'; return; }
-  if (!password)  { loginError.textContent = '请输入密码'; return; }
+  if (!baseUrl)  { loginError.textContent = '请输入 API Base URL'; return; }
+  if (!username) { loginError.textContent = '请输入账号'; return; }
+  if (!password) { loginError.textContent = '请输入密码'; return; }
 
   loginBtn.disabled = true;
   loginBtn.textContent = '登入中...';
 
   try {
-    // 生成 TOTP 验证码
-    const totp = new OTPAuth.TOTP({ secret: TOTP_SECRET, digits: 6, period: 30 });
-    const googleCode = totp.generate();
-
-    // MD5 加密密码
-    const passwordMd5 = md5(password);
-
-    const form = new FormData();
-    form.append('username', username);
-    form.append('password', passwordMd5);
-    form.append('google_code', googleCode);
-    form.append('device', DEVICE_ID);
-    form.append('lang', 'zh_CN');
-    form.append('timezone', '+8');
-    form.append('custom_host', baseUrl + '/');
-
-    const res = await fetch(`${baseUrl}/admin/admin_user/login`, { method: 'POST', body: form });
+    const res  = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baseUrl, username, password })
+    });
     const data = await res.json();
 
     if (data?.status !== 0) {
-      loginError.textContent = `登入失败：[${data?.status}] ${data?.msg || '未知错误'}`;
+      loginError.textContent = `登入失败：[${data?.status}] ${data?.msg || data?.error || '未知错误'}`;
       return;
     }
 
@@ -323,27 +308,11 @@ async function doSearch() {
   searchBtn.disabled = true;
   exportBtn.disabled = true;
 
-  // 构建 multipart/form-data 直接打 API（纯前端，不经代理）
-  const form = new FormData();
-  form.append('plat_id', '30035');
-  form.append('token', token);
-  form.append('page_count', String(params.pageCount || 1));
-  form.append('page_size', String(params.pageSize || 20));
-  form.append('device', 'bd0e7b1c-86b4-422b-beeb-0e3f161e5470');
-  form.append('lang', 'zh_CN');
-  form.append('timezone', '+8');
-  form.append('custom_host', apiUrl + '/');
-  form.append('login_admin_user_id', '1551');
-  // 附加筛选参数
-  const reserved = ['baseUrl','token','pageCount','pageSize'];
-  Object.entries(params).forEach(([k,v]) => {
-    if (!reserved.includes(k) && v !== undefined && v !== '') form.append(k, String(v));
-  });
-
   try {
-    const res = await fetch(`${apiUrl}/admin/plat_users_bet/index`, {
+    const res = await fetch('/api/bet', {
       method: 'POST',
-      body: form
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
     });
 
     if (res.status === 401) {
