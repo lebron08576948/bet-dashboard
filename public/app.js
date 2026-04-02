@@ -15,23 +15,22 @@
 const ALL_FILTERS = [
   // 时间
   { key: 'bet_time',      label: '投注时间', group: '📅 时间', type: 'timerange', paramStart: 'bet_at-{>=}', paramEnd: 'bet_at-{<=}' },
-  { key: 'settle_time',   label: '结算时间', group: '📅 时间', type: 'timerange', paramStart: 'settle_at-{>=}', paramEnd: 'settle_at-{<=}' },
+  { key: 'settle_time',   label: '结算时间', group: '📅 时间', type: 'timerange', paramStart: 'settlement_at-{>=}', paramEnd: 'settlement_at-{<=}' },
   // 用户
   { key: 'user_id',       label: '用户ID',   group: '👤 用户', type: 'text', param: 'user_id' },
-  { key: 'nickname',      label: '用户昵称', group: '👤 用户', type: 'text', param: 'nickname' },
+  { key: 'nickname',      label: '用户昵称', group: '👤 用户', type: 'text', param: 'nick_name' },
   // 游戏
-  { key: 'vendor_name',   label: '游戏厂商', group: '🎮 游戏', type: 'text', param: 'vendor_name' },
-  { key: 'game_type',     label: '游戏类型', group: '🎮 游戏', type: 'text', param: 'game_type' },
-  { key: 'game_name',     label: '游戏名称', group: '🎮 游戏', type: 'text', param: 'game_name' },
+  { key: 'vendor_id',     label: '游戏厂商ID', group: '🎮 游戏', type: 'text', param: 'vendor_id' },
+  { key: 'vendor_type',   label: '游戏类型', group: '🎮 游戏', type: 'text', param: 'vendor_type' },
+  { key: 'game_name',     label: '游戏名称', group: '🎮 游戏', type: 'text', param: 'vendor_product_name' },
   // 订单
   { key: 'order_no',      label: '下注订单号', group: '📋 订单', type: 'text', param: 'order_no' },
   { key: 'vendor_order',  label: '厂商订单号', group: '📋 订单', type: 'text', param: 'vendor_order_no' },
   // 其他
-  { key: 'status',        label: '投注状态', group: '📌 其他', type: 'text', param: 'status' },
-  { key: 'currency',      label: '币种',     group: '📌 其他', type: 'text', param: 'currency' },
-  { key: 'resettle',      label: '重结状态', group: '📌 其他', type: 'text', param: 'is_resettle' },
-  { key: 'account_currency', label: '帐户币种', group: '📌 其他', type: 'text', param: 'account_currency' },
-  { key: 'vendor_currency',  label: '厂商币种', group: '📌 其他', type: 'text', param: 'vendor_currency' },
+  { key: 'status',           label: '投注状态', group: '📌 其他', type: 'text', param: 'settlement_status' },
+  { key: 'resettle',         label: '重结状态', group: '📌 其他', type: 'text', param: 'resettlement_status' },
+  { key: 'account_currency', label: '帐户币种', group: '📌 其他', type: 'text', param: 'coin_name_unique' },
+  { key: 'vendor_currency',  label: '厂商币种', group: '📌 其他', type: 'text', param: 'vendor_coin_name_unique' },
 ];
 
 let activeFilters = new Set(['bet_time']); // 默认勾选投注时间
@@ -40,14 +39,14 @@ let activeFilters = new Set(['bet_time']); // 默认勾选投注时间
 // 常量：所有可用栏位定义
 // =============================================
 const ALL_COLUMNS = [
-  { key: 'bet_at',          label: '时间',     group: '📅 时间' },
-  { key: 'user_id',         label: '用户ID',   group: '👤 用户' },
-  { key: 'vendor_type',     label: '游戏厂商', group: '🎮 游戏' },
-  { key: 'game_type',       label: '游戏类型', group: '🎮 游戏' },
-  { key: 'bet_gold',        label: '投注金额', group: '💰 金额' },
-  { key: 'bet_result',      label: '输赢金额', group: '💰 金额' },
-  { key: 'backwater',       label: '用户流水', group: '💰 金额' },
-  { key: 'status',          label: '状态',     group: '📌 其他' },
+  { key: 'bet_at',            label: '时间',     group: '📅 时间' },
+  { key: 'user_id',           label: '用户ID',   group: '👤 用户' },
+  { key: 'vendor_id',         label: '游戏厂商', group: '🎮 游戏' },
+  { key: 'vendor_type',       label: '游戏类型', group: '🎮 游戏' },
+  { key: 'bet_gold',          label: '投注金额', group: '💰 金额' },
+  { key: 'win_gold',          label: '输赢金额', group: '💰 金额' },
+  { key: 'water',             label: '用户流水', group: '💰 金额' },
+  { key: 'settlement_status', label: '状态',     group: '📌 其他' },
 ];
 
 // localStorage key 名（与需求一致）
