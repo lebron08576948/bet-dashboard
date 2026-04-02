@@ -14,8 +14,8 @@ const ALL_ITEMS = [
   { key: 'user_id',          label: '用户ID',     group: '👤 用户',  colKey: 'user_id',           filterType: 'text', param: 'user_id',             defaultOn: true },
   { key: 'nickname',         label: '用户昵称',   group: '👤 用户',  colKey: 'nick_name',         filterType: 'text', param: 'nick_name',           defaultOn: false },
   // 游戏
-  { key: 'vendor_id',        label: '游戏厂商',   group: '🎮 游戏',  colKey: 'vendor_id',         filterType: 'text', param: 'vendor_id',           defaultOn: true },
-  { key: 'vendor_type',      label: '游戏类型',   group: '🎮 游戏',  colKey: 'vendor_type',       filterType: 'text', param: 'vendor_type',         defaultOn: true },
+  { key: 'vendor_id',        label: '游戏厂商',   group: '🎮 游戏',  colKey: 'vendor_id',         filterType: 'select', param: 'vendor_id', options: VENDOR_ID_MAP, defaultOn: true },
+  { key: 'vendor_type',      label: '游戏类型',   group: '🎮 游戏',  colKey: 'vendor_type',       filterType: 'select', param: 'vendor_type', options: VENDOR_TYPE_MAP, defaultOn: true },
   { key: 'game_name',        label: '游戏名称',   group: '🎮 游戏',  colKey: 'vendor_product_name', filterType: 'text', param: 'vendor_product_name', defaultOn: false },
   // 订单
   { key: 'order_no',         label: '下注订单号', group: '📋 订单',  colKey: 'order_no',          filterType: 'text', param: 'order_no',            defaultOn: false },
@@ -30,6 +30,63 @@ const ALL_ITEMS = [
   { key: 'account_currency', label: '帐户币种',   group: '📌 其他',  colKey: 'coin_name_unique',  filterType: 'text', param: 'coin_name_unique',    defaultOn: false },
   { key: 'vendor_currency',  label: '厂商币种',   group: '📌 其他',  colKey: 'vendor_coin_name_unique', filterType: 'text', param: 'vendor_coin_name_unique', defaultOn: false },
 ];
+
+// 厂商ID对照表
+const VENDOR_ID_MAP = {
+  155: 'DB Lottery',
+  158: 'VIVO Gaming',
+  159: 'Evolution_A',
+  199: 'FC',
+  208: 'Spribe_A',
+  210: 'OneTouch',
+  225: 'Evolution_R',
+  243: 'JILI-INR',
+  267: 'Funtide',
+  268: 'Evoplay_A',
+  283: 'Easybet-96com',
+  284: 'Turbo Games',
+  287: 'Nolimit City_A',
+  288: 'Nolimit City_R',
+  289: 'Top Spin',
+  294: 'Exchange-96',
+  295: 'BigTimeGaming_A',
+  296: 'BigTimeGaming_R',
+  298: 'Netent_A',
+  299: 'Netent_R',
+  301: 'Red Tiger_A',
+  302: 'Red Tiger_R',
+  303: 'Hacksaw',
+  308: 'SmartSoft Gaming',
+  314: 'SA Gaming',
+  316: "Play'n Go",
+  336: 'KY GAMING',
+  344: 'Bgaming',
+  356: 'Amusnet',
+  357: '7777 Gaming',
+  358: 'Winfinity',
+  359: 'Aviatrix',
+  369: 'DELFINO_PG Soft',
+  401: '96-Tequity',
+  403: 'KingMidas',
+  404: 'Galaxsys',
+  405: 'Shady Lady',
+  406: 'Playtech',
+  418: 'BGaming_R',
+  421: 'DELFINO_PragmaticPlay',
+  423: 'Slotmill',
+  425: 'DELFINO_FatPanda',
+};
+
+// 游戏类型对照表
+const VENDOR_TYPE_MAP = {
+  2:   '棋牌',
+  4:   '彩票',
+  8:   '捕鱼',
+  16:  '电子',
+  32:  '真人',
+  64:  '体育电竞',
+  128: '链游',
+};
 
 const TOKEN_KEY   = 'bet_token';
 const API_URL_KEY = 'bet_api_url';
@@ -140,6 +197,17 @@ function renderFilterInputs() {
           });
         }
       }, 50);
+    } else if (item.filterType === 'select') {
+      div.className = 'form-group';
+      const opts = Object.entries(item.options).map(([v, l]) =>
+        `<option value="${v}">${l}</option>`
+      ).join('');
+      div.innerHTML = `
+        <label>${item.label}</label>
+        <select id="filter-${item.key}">
+          <option value="">全部</option>
+          ${opts}
+        </select>`;
     } else {
       div.className = 'form-group';
       div.innerHTML = `
@@ -346,7 +414,9 @@ function renderTable(rows) {
     const tr = document.createElement('tr');
     visibleCols.forEach(col => {
       const td = document.createElement('td');
-      const val = row[col.colKey];
+      let val = row[col.colKey];
+      if (col.key === 'vendor_id' && val !== null && val !== undefined) val = VENDOR_ID_MAP[val] || val;
+      if (col.key === 'vendor_type' && val !== null && val !== undefined) val = VENDOR_TYPE_MAP[val] || val;
       td.textContent = (val === null || val === undefined || val === '') ? '-' : val;
       td.title = td.textContent;
       tr.appendChild(td);
