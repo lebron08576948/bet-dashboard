@@ -513,3 +513,15 @@ html, body {
   border-bottom: 1px solid #333;
   margin-bottom: 4px;
 }
+
+/* 筛选条件勾选区 */
+.filter-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.filter-toggle-actions { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.filter-toggle-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding: 12px; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; }
+.filter-group { min-width: 120px; }
+.filter-group-header { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #333; }
+.filter-toggle-item { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #ccc; cursor: pointer; margin-bottom: 4px; }
+.filter-toggle-item:hover { color: #fff; }
+.filter-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+.form-group-inline { display: flex; align-items: center; gap: 8px; }
+.form-group-inline label { white-space: nowrap; font-size: 13px; color: #aaa; }

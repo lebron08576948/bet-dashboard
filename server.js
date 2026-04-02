@@ -69,7 +69,6 @@ app.post('/api/bet', async (req, res) => {
   }
 
   try {
-    // 构建 multipart/form-data
     const FormData = require('form-data');
     const form = new FormData();
     form.append('plat_id', '30035');
@@ -81,10 +80,14 @@ app.post('/api/bet', async (req, res) => {
     form.append('timezone', '+8');
     form.append('custom_host', baseUrl + '/');
     form.append('login_admin_user_id', '1551');
-    if (startTime) form.append('bet_at-{>=}', startTime);
-    if (endTime) form.append('bet_at-{<=}', endTime);
-    if (username) form.append('username', username);
-    if (vendor) form.append('vendor_name', vendor);
+
+    // 动态附加所有其他筛选参数
+    const reserved = ['baseUrl','token','pageCount','pageSize'];
+    Object.entries(req.body).forEach(([k, v]) => {
+      if (!reserved.includes(k) && v !== undefined && v !== '') {
+        form.append(k, String(v));
+      }
+    });
 
     const response = await axios.post(
       `${baseUrl}/admin/plat_users_bet/index`,

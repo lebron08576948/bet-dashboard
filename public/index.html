@@ -64,25 +64,23 @@
 
         <!-- 筛选条件区 -->
         <div class="filter-panel">
-          <h3 class="panel-title">筛选条件</h3>
-          <div class="filter-grid">
-            <div class="form-group form-group-wide">
-              <label>时间范围</label>
-              <div class="time-range">
-                <input type="datetime-local" id="filter-start-time" />
-                <span class="time-separator">~</span>
-                <input type="datetime-local" id="filter-end-time" />
-              </div>
+          <div class="filter-panel-header">
+            <h3 class="panel-title">筛选条件</h3>
+            <div class="filter-toggle-actions">
+              <button class="btn-link" id="filter-check-all">全选</button>
+              <span>|</span>
+              <button class="btn-link" id="filter-uncheck-all">全不选</button>
             </div>
-            <div class="form-group">
-              <label>用户名</label>
-              <input type="text" id="filter-username" placeholder="可空，不填表示全部" />
-            </div>
-            <div class="form-group">
-              <label>厂商</label>
-              <input type="text" id="filter-vendor" placeholder="可空，不填表示全部" />
-            </div>
-            <div class="form-group">
+          </div>
+
+          <!-- 筛选条件勾选区 -->
+          <div class="filter-toggle-grid" id="filter-toggle-grid"></div>
+
+          <!-- 动态筛选输入区 -->
+          <div class="filter-inputs" id="filter-inputs"></div>
+
+          <div class="filter-actions">
+            <div class="form-group-inline">
               <label>每页笔数</label>
               <select id="filter-page-size">
                 <option value="10">10 笔</option>
@@ -91,8 +89,6 @@
                 <option value="200">200 笔</option>
               </select>
             </div>
-          </div>
-          <div class="filter-actions">
             <button class="btn btn-primary" id="search-btn">🔍 查询</button>
             <button class="btn btn-success" id="export-btn" disabled>📥 导出 Excel</button>
           </div>

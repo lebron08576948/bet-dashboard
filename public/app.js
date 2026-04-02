@@ -10,6 +10,33 @@
  */
 
 // =============================================
+// 常量：所有可用筛选条件定义
+// =============================================
+const ALL_FILTERS = [
+  // 时间
+  { key: 'bet_time',      label: '投注时间', group: '📅 时间', type: 'timerange', paramStart: 'bet_at-{>=}', paramEnd: 'bet_at-{<=}' },
+  { key: 'settle_time',   label: '结算时间', group: '📅 时间', type: 'timerange', paramStart: 'settle_at-{>=}', paramEnd: 'settle_at-{<=}' },
+  // 用户
+  { key: 'user_id',       label: '用户ID',   group: '👤 用户', type: 'text', param: 'user_id' },
+  { key: 'nickname',      label: '用户昵称', group: '👤 用户', type: 'text', param: 'nickname' },
+  // 游戏
+  { key: 'vendor_name',   label: '游戏厂商', group: '🎮 游戏', type: 'text', param: 'vendor_name' },
+  { key: 'game_type',     label: '游戏类型', group: '🎮 游戏', type: 'text', param: 'game_type' },
+  { key: 'game_name',     label: '游戏名称', group: '🎮 游戏', type: 'text', param: 'game_name' },
+  // 订单
+  { key: 'order_no',      label: '下注订单号', group: '📋 订单', type: 'text', param: 'order_no' },
+  { key: 'vendor_order',  label: '厂商订单号', group: '📋 订单', type: 'text', param: 'vendor_order_no' },
+  // 其他
+  { key: 'status',        label: '投注状态', group: '📌 其他', type: 'text', param: 'status' },
+  { key: 'currency',      label: '币种',     group: '📌 其他', type: 'text', param: 'currency' },
+  { key: 'resettle',      label: '重结状态', group: '📌 其他', type: 'text', param: 'is_resettle' },
+  { key: 'account_currency', label: '帐户币种', group: '📌 其他', type: 'text', param: 'account_currency' },
+  { key: 'vendor_currency',  label: '厂商币种', group: '📌 其他', type: 'text', param: 'vendor_currency' },
+];
+
+let activeFilters = new Set(['bet_time']); // 默认勾选投注时间
+
+// =============================================
 // 常量：所有可用栏位定义
 // =============================================
 const ALL_COLUMNS = [
@@ -71,6 +98,88 @@ const pageInfo     = document.getElementById('page-info');
 const totalCountEl = document.getElementById('total-count');
 const currentPageEl = document.getElementById('current-page');
 const totalPagesEl = document.getElementById('total-pages');
+const filterToggleGrid = document.getElementById('filter-toggle-grid');
+const filterInputs     = document.getElementById('filter-inputs');
+const filterCheckAll   = document.getElementById('filter-check-all');
+const filterUncheckAll = document.getElementById('filter-uncheck-all');
+
+// =============================================
+// 筛选条件勾选渲染
+// =============================================
+function renderFilterToggles() {
+  filterToggleGrid.innerHTML = '';
+  const groups = {};
+  ALL_FILTERS.forEach(f => {
+    if (!groups[f.group]) groups[f.group] = [];
+    groups[f.group].push(f);
+  });
+
+  Object.entries(groups).forEach(([groupName, filters]) => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'filter-group';
+
+    const header = document.createElement('div');
+    header.className = 'filter-group-header';
+    header.textContent = groupName;
+    groupDiv.appendChild(header);
+
+    filters.forEach(f => {
+      const label = document.createElement('label');
+      label.className = 'filter-toggle-item';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = f.key;
+      cb.checked = activeFilters.has(f.key);
+      cb.addEventListener('change', () => {
+        if (cb.checked) activeFilters.add(f.key);
+        else activeFilters.delete(f.key);
+        renderFilterInputs();
+      });
+
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(' ' + f.label));
+      groupDiv.appendChild(label);
+    });
+
+    filterToggleGrid.appendChild(groupDiv);
+  });
+}
+
+function renderFilterInputs() {
+  filterInputs.innerHTML = '';
+  ALL_FILTERS.filter(f => activeFilters.has(f.key)).forEach(f => {
+    const div = document.createElement('div');
+    if (f.type === 'timerange') {
+      div.className = 'form-group form-group-wide';
+      div.innerHTML = `
+        <label>${f.label}</label>
+        <div class="time-range">
+          <input type="datetime-local" id="filter-${f.key}-start" />
+          <span class="time-separator">~</span>
+          <input type="datetime-local" id="filter-${f.key}-end" />
+        </div>`;
+    } else {
+      div.className = 'form-group';
+      div.innerHTML = `
+        <label>${f.label}</label>
+        <input type="text" id="filter-${f.key}" placeholder="可空" />`;
+    }
+    filterInputs.appendChild(div);
+  });
+}
+
+filterCheckAll?.addEventListener('click', () => {
+  activeFilters = new Set(ALL_FILTERS.map(f => f.key));
+  renderFilterToggles();
+  renderFilterInputs();
+});
+
+filterUncheckAll?.addEventListener('click', () => {
+  activeFilters.clear();
+  renderFilterToggles();
+  renderFilterInputs();
+});
 
 // =============================================
 // 初始化：判断是否已登入
@@ -104,10 +213,10 @@ function showLoginPage() {
 function showMainPage() {
   loginPage.classList.add('hidden');
   mainPage.classList.remove('hidden');
-  // 显示当前使用的 API URL
   navApiUrl.textContent = localStorage.getItem(API_URL_KEY) || '';
-  // 渲染栏位勾选列表
   renderColumnList();
+  renderFilterToggles();
+  renderFilterInputs();
 }
 
 // =============================================
@@ -221,18 +330,25 @@ async function doSearch() {
     return;
   }
 
-  // 构建查询参数
+  // 构建查询参数（从动态筛选条件读取）
   const params = {
     baseUrl: apiUrl,
     token: token,
-    page: currentPage,
-    per_page: parseInt(filterPageSize.value, 10),
+    pageCount: currentPage,
+    pageSize: parseInt(document.getElementById('filter-page-size').value, 10),
   };
 
-  if (filterStartTime.value) params.start_time = filterStartTime.value.replace('T', ' ');
-  if (filterEndTime.value)   params.end_time   = filterEndTime.value.replace('T', ' ');
-  if (filterUsername.value.trim()) params.username = filterUsername.value.trim();
-  if (filterVendor.value.trim())   params.vendor_name = filterVendor.value.trim();
+  ALL_FILTERS.filter(f => activeFilters.has(f.key)).forEach(f => {
+    if (f.type === 'timerange') {
+      const startEl = document.getElementById(`filter-${f.key}-start`);
+      const endEl   = document.getElementById(`filter-${f.key}-end`);
+      if (startEl?.value) params[f.paramStart] = startEl.value.replace('T', ' ');
+      if (endEl?.value)   params[f.paramEnd]   = endEl.value.replace('T', ' ');
+    } else {
+      const el = document.getElementById(`filter-${f.key}`);
+      if (el?.value.trim()) params[f.param] = el.value.trim();
+    }
+  });
 
   // UI 状态：查询中
   setStatus('loading', '<span class="spinner"></span> 查询中...');
