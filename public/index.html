@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投注记录查询系统</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- SheetJS CDN：用于导出 Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- ==================== 登入页 ==================== -->
+  <div id="login-page" class="page">
+    <div class="login-box">
+      <h1 class="login-title">🎯 投注记录查询系统</h1>
+      <p class="login-subtitle">请输入 API 信息登入</p>
+
+      <div class="form-group">
+        <label for="api-url">API Base URL</label>
+        <input type="text" id="api-url" placeholder="https://api.example.com" />
+      </div>
+      <div class="form-group">
+        <label for="login-username">账号</label>
+        <input type="text" id="login-username" placeholder="请输入账号" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">密码</label>
+        <input type="password" id="login-password" placeholder="请输入密码" />
+      </div>
+
+      <button class="btn btn-primary btn-block" id="login-btn">登入</button>
+      <div id="login-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 主页 ==================== -->
+  <div id="main-page" class="page hidden">
+
+    <!-- 顶部导航栏 -->
+    <header class="navbar">
+      <div class="navbar-brand">🎯 投注记录查询系统</div>
+      <div class="navbar-right">
+        <span id="nav-api-url" class="nav-info"></span>
+        <button class="btn btn-danger btn-sm" id="logout-btn">登出</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+
+      <!-- 左侧：栏位勾选面板 -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>显示栏位</h3>
+          <div class="sidebar-actions">
+            <button class="btn-link" id="check-all-btn">全选</button>
+            <span>|</span>
+            <button class="btn-link" id="uncheck-all-btn">全不选</button>
+          </div>
+        </div>
+        <div class="column-list" id="column-list">
+          <!-- 由 JS 动态生成 -->
+        </div>
+      </aside>
+
+      <!-- 右侧：查询 + 结果 -->
+      <main class="content">
+
+        <!-- 筛选条件区 -->
+        <div class="filter-panel">
+          <h3 class="panel-title">筛选条件</h3>
+          <div class="filter-grid">
+            <div class="form-group">
+              <label>开始时间</label>
+              <input type="datetime-local" id="filter-start-time" />
+            </div>
+            <div class="form-group">
+              <label>结束时间</label>
+              <input type="datetime-local" id="filter-end-time" />
+            </div>
+            <div class="form-group">
+              <label>用户名</label>
+              <input type="text" id="filter-username" placeholder="可空，不填表示全部" />
+            </div>
+            <div class="form-group">
+              <label>厂商</label>
+              <input type="text" id="filter-vendor" placeholder="可空，不填表示全部" />
+            </div>
+            <div class="form-group">
+              <label>每页笔数</label>
+              <select id="filter-page-size">
+                <option value="10">10 笔</option>
+                <option value="50" selected>50 笔</option>
+                <option value="100">100 笔</option>
+                <option value="200">200 笔</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-primary" id="search-btn">🔍 查询</button>
+            <button class="btn btn-success" id="export-btn" disabled>📥 导出 Excel</button>
+          </div>
+        </div>
+
+        <!-- 状态提示 -->
+        <div id="status-bar" class="status-bar hidden"></div>
+
+        <!-- 结果表格 -->
+        <div class="table-wrapper">
+          <div id="table-info" class="table-info hidden">
+            共 <strong id="total-count">0</strong> 笔记录，当前第 <strong id="current-page">1</strong> 页 / 共 <strong id="total-pages">1</strong> 页
+          </div>
+          <div class="table-container" id="table-container">
+            <div class="empty-state" id="empty-state">
+              <p>请设定筛选条件后点击「查询」</p>
+            </div>
+            <table class="data-table hidden" id="data-table">
+              <thead id="table-head"></thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分页控制 -->
+        <div class="pagination hidden" id="pagination">
+          <button class="btn btn-sm" id="prev-btn">← 上一页</button>
+          <span class="page-info" id="page-info">第 1 页</span>
+          <button class="btn btn-sm" id="next-btn">下一页 →</button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
