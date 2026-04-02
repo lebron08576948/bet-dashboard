@@ -257,7 +257,7 @@ loginBtn.addEventListener('click', async () => {
     form.append('timezone', '+8');
     form.append('custom_host', baseUrl + '/');
 
-    const res = await fetch(`${baseUrl}/admin/login`, { method: 'POST', body: form });
+    const res = await fetch(`${baseUrl}/admin/admin_user/login`, { method: 'POST', body: form });
     const data = await res.json();
 
     if (data?.status !== 0) {
